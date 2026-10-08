@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Parkir</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-in {
+            background-color: #16a34a;
+            color: white;
+        }
+
+        .btn-in:hover {
+            background-color: #15803d;
+        }
+
+        .btn-out {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .btn-out:hover {
+            background-color: #b91c1c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-parkir {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-selesai {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sistem Manajemen Parkir</h1>
+
+    <div class="layout">
+        <!-- Form Panel -->
+        <div class="card">
+            <div class="form-group">
+                <label for="platNomor">Plat Nomor Kendaraan</label>
+                <input type="text" id="platNomor" placeholder="Contoh: B 1234 ABC" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label for="jenisKendaraan">Jenis Kendaraan</label>
+                <select id="jenisKendaraan">
+                    <option value="Motor">Motor (Rp 2.000/jam)</option>
+                    <option value="Mobil">Mobil (Rp 5.000/jam)</option>
+                </select>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-in" onclick="prosesMasuk()">Kendaraan Masuk</button>
+                <button class="btn-out" onclick="prosesKeluar()">Kendaraan Keluar</button>
+            </div>
+        </div>
+
+        <!-- Data Tabel -->
+        <div class="card">
+            <h2>Daftar Parkir</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plat Nomor</th>
+                            <th>Jenis</th>
+                            <th>Masuk</th>
+                            <th>Keluar</th>
+                            <th>Tarif</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataParkir">
+                        <!-- Data akan dimasukkan lewat JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const TARIF = {
+        Motor: 2000,
+        Mobil: 5000
+    };
+
+    // Ambil data dari LocalStorage atau buat array kosong
+    let dataParkir = JSON.parse(localStorage.getItem('parkir_db')) || [];
+
+    function simpanData() {
+        localStorage.setItem('parkir_db', JSON.stringify(dataParkir));
+        tampilkanData();
+    }
+
+    function formatTanggal(isoString) {
+        if (!isoString) return '-';
+        const d = new Date(isoString);
+        return d.toLocaleDateString('id-ID', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function prosesMasuk() {
+        const platInput = document.getElementById('platNomor');
+        const jenisInput = document.getElementById('jenisKendaraan');
+        const plat = platInput.value.trim().toUpperCase();
+        const jenis = jenisInput.value;
+
+        if (!plat) {
+            alert('Masukkan nomor plat kendaraan!');
+            return;
+        }
+
+        // Cek apakah kendaraan masih berstatus Parkir
+        const terdaftar = dataParkir.find(item => item.plat === plat && item.status === 'Parkir');
+        if (terdaftar) {
+            alert(`Kendaraan dengan plat ${plat} sedang dalam area parkir!`);
+            return;
+        }
+
+        const dataBaru = {
+            id: Date.now(),
+            plat: plat,
+            jenis: jenis,
+            waktuMasuk: new Date().toISOString(),
+            waktuKeluar: null,
+            tarif: 0,
+            status: 'Parkir'
+        };
+
+        dataParkir.unshift(dataBaru);
+        simpanData();
+        platInput.value = '';
+        alert(`Kendaraan ${plat} berhasil masuk.`);
+    }
+
+    function prosesKeluar() {
+        const platInput = document.getElementById('platNomor');
+        const plat = platInput.value.trim().toUpperCase();
+
+        if (!plat) {
+            alert('Masukkan nomor plat kendaraan yang akan keluar!');
+            return;
+        }
+
+        const index = dataParkir.findIndex(item => item.plat === plat && item.status === 'Parkir');
+
+        if (index === -1) {
+            alert(`Kendaraan dengan plat ${plat} tidak ditemukan atau sudah keluar!`);
+            return;
+        }
+
+        const item = dataParkir[index];
+        const waktuMasuk = new Date(item.waktuMasuk);
+        const waktuKeluar = new Date();
+
+        // Hitung selisih waktu dalam jam (dibulatkan ke atas)
+        const selisihDetik = (waktuKeluar - waktuMasuk) / 1000;
+        let durasiJam = Math.ceil(selisihDetik / 3600);
+        if (durasiJam < 1) durasiJam = 1;
+
+        const totalTarif = durasiJam * TARIF[item.jenis];
+
+        // Update data
+        dataParkir[index].waktuKeluar = waktuKeluar.toISOString();
+        dataParkir[index].tarif = totalTarif;
+        dataParkir[index].status = 'Selesai';
+
+        simpanData();
+        platInput.value = '';
+
+        alert(`--- Pembayaran Parkir ---\nPlat: ${plat}\nDurasi: ${durasiJam} jam\nTotal Bayar: Rp ${totalTarif.toLocaleString('id-ID')}`);
+    }
+
+    function pilihPlat(plat) {
+        document.getElementById('platNomor').value = plat;
+    }
+
+    function tampilkanData() {
+        const tbody = document.getElementById('dataParkir');
+        tbody.innerHTML = '';
+
+        if (dataParkir.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">Belum ada data parkir.</td></tr>';
+            return;
+        }
+
+        dataParkir.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.onclick = () => pilihPlat(item.plat);
+
+            const badgeClass = item.status === 'Parkir' ? 'badge-parkir' : 'badge-selesai';
+            const tarifText = item.tarif > 0 ? `Rp ${item.tarif.toLocaleString('id-ID')}` : '-';
+
+            tr.innerHTML = `
+                <td><strong>${item.plat}</strong></td>
+                <td>${item.jenis}</td>
+                <td>${formatTanggal(item.waktuMasuk)}</td>
+                <td>${formatTanggal(item.waktuKeluar)}</td>
+                <td>${tarifText}</td>
+                <td><span class="badge ${badgeClass}">${item.status}</span></td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Tampilkan data saat pertama kali dimuat
+    tampilkanData();
+</script>
+
+</body>
+</html>
