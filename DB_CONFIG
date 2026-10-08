@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS parkir (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    plat_nomor TEXT NOT NULL,
+    jenis_kendaraan TEXT CHECK(jenis_kendaraan IN ('Motor', 'Mobil')) NOT NULL,
+    waktu_masuk TEXT NOT NULL,
+    waktu_keluar TEXT DEFAULT NULL,
+    total_tarif INTEGER DEFAULT 0,
+    status TEXT CHECK(status IN ('Parkir', 'Selesai')) DEFAULT 'Parkir'
+);
