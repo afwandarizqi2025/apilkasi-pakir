@@ -332,3 +332,431 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Parkir Modern</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #0f172a;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #2563eb;
+        }
+
+        .stat-card h3 {
+            font-size: 13px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .stat-card p {
+            font-size: 22px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-top: 5px;
+        }
+
+        /* Layout Utama */
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        .btn-in { background-color: #16a34a; color: white; }
+        .btn-out { background-color: #dc2626; color: white; }
+        .btn-export { background-color: #0284c7; color: white; margin-top: 10px; }
+        .btn-delete { background-color: #ef4444; color: white; padding: 4px 8px; font-size: 12px; }
+
+        /* Table & Tools */
+        .table-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-box {
+            max-width: 250px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+
+        th { background-color: #f8fafc; color: #475569; }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-parkir { background-color: #dbeafe; color: #1e40af; }
+        .badge-selesai { background-color: #dcfce7; color: #166534; }
+
+        .table-container { overflow-x: auto; }
+
+        /* Media Print Struk */
+        @media print {
+            body * { visibility: hidden; }
+            #receipt, #receipt * { visibility: visible; }
+            #receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                font-family: monospace;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sistem Parkir Modern</h1>
+
+    <!-- 1. DASHBOARD STATISTIK -->
+    <div class="stats-grid">
+        <div class="stat-card" style="border-color: #2563eb;">
+            <h3>Sedang Parkir</h3>
+            <p id="statParkir">0</p>
+        </div>
+        <div class="stat-card" style="border-color: #16a34a;">
+            <h3>Selesai Hari Ini</h3>
+            <p id="statSelesai">0</p>
+        </div>
+        <div class="stat-card" style="border-color: #eab308;">
+            <h3>Total Pendapatan</h3>
+            <p id="statPendapatan">Rp 0</p>
+        </div>
+    </div>
+
+    <div class="layout">
+        <!-- Form Panel -->
+        <div class="card">
+            <div class="form-group">
+                <label for="platNomor">Plat Nomor</label>
+                <input type="text" id="platNomor" placeholder="Contoh: B 1234 ABC" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label for="jenisKendaraan">Jenis Kendaraan</label>
+                <select id="jenisKendaraan">
+                    <option value="Motor">Motor (Rp 2.000/jam)</option>
+                    <option value="Mobil">Mobil (Rp 5.000/jam)</option>
+                </select>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-in" onclick="prosesMasuk()">Masuk Parkir</button>
+                <button class="btn-out" onclick="prosesKeluar()">Keluar Parkir</button>
+            </div>
+
+            <!-- 2. EXPORT DATA -->
+            <button class="btn-export" onclick="exportKeCSV()">Export Data ke Excel (CSV)</button>
+        </div>
+
+        <!-- Data Tabel -->
+        <div class="card">
+            <div class="table-tools">
+                <h2>Riwayat Parkir</h2>
+                <!-- 3. CARI DATA REAL-TIME -->
+                <input type="text" id="searchPlat" class="search-box" placeholder="Cari plat nomor..." onkeyup="tampilkanData()">
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plat</th>
+                            <th>Jenis</th>
+                            <th>Masuk</th>
+                            <th>Keluar</th>
+                            <th>Tarif</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataParkir"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MODAL STRUK PEMBAYARAN -->
+<div id="receipt" style="display:none; padding: 20px; text-align: center;">
+    <h2>STRUK BUKTI PARKIR</h2>
+    <p>----------------------------------</p>
+    <p>Plat Nomor: <span id="rPlat"></span></p>
+    <p>Jenis: <span id="rJenis"></span></p>
+    <p>Waktu Masuk: <span id="rMasuk"></span></p>
+    <p>Waktu Keluar: <span id="rKeluar"></span></p>
+    <p>Durasi: <span id="rDurasi"></span> Jam</p>
+    <p>----------------------------------</p>
+    <h3>Total: Rp <span id="rTarif"></span></h3>
+    <p>----------------------------------</p>
+    <p>Terima Kasih atas Kunjungan Anda!</p>
+</div>
+
+<script>
+    const TARIF = { Motor: 2000, Mobil: 5000 };
+    let dataParkir = JSON.parse(localStorage.getItem('parkir_db')) || [];
+
+    function simpanData() {
+        localStorage.setItem('parkir_db', JSON.stringify(dataParkir));
+        tampilkanData();
+    }
+
+    function formatTanggal(isoString) {
+        if (!isoString) return '-';
+        const d = new Date(isoString);
+        return d.toLocaleDateString('id-ID', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function prosesMasuk() {
+        const platInput = document.getElementById('platNomor');
+        const jenisInput = document.getElementById('jenisKendaraan');
+        const plat = platInput.value.trim().toUpperCase();
+
+        if (!plat) { alert('Masukkan nomor plat!'); return; }
+
+        const terdaftar = dataParkir.find(i => i.plat === plat && i.status === 'Parkir');
+        if (terdaftar) { alert(`Kendaraan ${plat} masih dalam lokasi parkir!`); return; }
+
+        dataParkir.unshift({
+            id: Date.now(),
+            plat: plat,
+            jenis: jenisInput.value,
+            waktuMasuk: new Date().toISOString(),
+            waktuKeluar: null,
+            tarif: 0,
+            status: 'Parkir'
+        });
+
+        simpanData();
+        platInput.value = '';
+    }
+
+    function prosesKeluar() {
+        const platInput = document.getElementById('platNomor');
+        const plat = platInput.value.trim().toUpperCase();
+
+        if (!plat) { alert('Masukkan nomor plat!'); return; }
+
+        const index = dataParkir.findIndex(i => i.plat === plat && i.status === 'Parkir');
+        if (index === -1) { alert(`Kendaraan ${plat} tidak terdaftar parkir!`); return; }
+
+        const item = dataParkir[index];
+        const waktuMasuk = new Date(item.waktuMasuk);
+        const waktuKeluar = new Date();
+
+        const selisihDetik = (waktuKeluar - waktuMasuk) / 1000;
+        let durasiJam = Math.ceil(selisihDetik / 3600);
+        if (durasiJam < 1) durasiJam = 1;
+
+        const totalTarif = durasiJam * TARIF[item.jenis];
+
+        dataParkir[index].waktuKeluar = waktuKeluar.toISOString();
+        dataParkir[index].tarif = totalTarif;
+        dataParkir[index].status = 'Selesai';
+
+        simpanData();
+        platInput.value = '';
+
+        // Cetak Struk
+        cetakStruk(dataParkir[index], durasiJam);
+    }
+
+    // Fitur Cetak Struk
+    function cetakStruk(item, durasi) {
+        document.getElementById('rPlat').innerText = item.plat;
+        document.getElementById('rJenis').innerText = item.jenis;
+        document.getElementById('rMasuk').innerText = formatTanggal(item.waktuMasuk);
+        document.getElementById('rKeluar').innerText = formatTanggal(item.waktuKeluar);
+        document.getElementById('rDurasi').innerText = durasi;
+        document.getElementById('rTarif').innerText = item.tarif.toLocaleString('id-ID');
+
+        const receiptEl = document.getElementById('receipt');
+        receiptEl.style.display = 'block';
+        window.print();
+        receiptEl.style.display = 'none';
+    }
+
+    // Fitur Export Data CSV
+    function exportKeCSV() {
+        if (dataParkir.length === 0) { alert('Data parkir kosong!'); return; }
+
+        let csvContent = "data:text/csv;charset=utf-8,Plat Nomor,Jenis,Waktu Masuk,Waktu Keluar,Tarif,Status\n";
+        dataParkir.forEach(i => {
+            csvContent += `${i.plat},${i.jenis},${formatTanggal(i.waktuMasuk)},${formatTanggal(i.waktuKeluar)},${i.tarif},${i.status}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `laporan_parkir_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Fitur Hapus Data
+    function hapusData(id) {
+        if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
+            dataParkir = dataParkir.filter(i => i.id !== id);
+            simpanData();
+        }
+    }
+
+    function updateStatistik() {
+        const parkirActive = dataParkir.filter(i => i.status === 'Parkir').length;
+        const parkirSelesai = dataParkir.filter(i => i.status === 'Selesai').length;
+        const totalPendapatan = dataParkir.reduce((acc, curr) => acc + curr.tarif, 0);
+
+        document.getElementById('statParkir').innerText = parkirActive;
+        document.getElementById('statSelesai').innerText = parkirSelesai;
+        document.getElementById('statPendapatan').innerText = `Rp ${totalPendapatan.toLocaleString('id-ID')}`;
+    }
+
+    function tampilkanData() {
+        const tbody = document.getElementById('dataParkir');
+        const filterKeyword = document.getElementById('searchPlat').value.toUpperCase();
+        tbody.innerHTML = '';
+
+        const filteredData = dataParkir.filter(i => i.plat.includes(filterKeyword));
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">Data tidak ditemukan.</td></tr>';
+            updateStatistik();
+            return;
+        }
+
+        filteredData.forEach(item => {
+            const tr = document.createElement('tr');
+            const badgeClass = item.status === 'Parkir' ? 'badge-parkir' : 'badge-selesai';
+            const tarifText = item.tarif > 0 ? `Rp ${item.tarif.toLocaleString('id-ID')}` : '-';
+
+            tr.innerHTML = `
+                <td><strong style="cursor:pointer;" onclick="document.getElementById('platNomor').value='${item.plat}'">${item.plat}</strong></td>
+                <td>${item.jenis}</td>
+                <td>${formatTanggal(item.waktuMasuk)}</td>
+                <td>${formatTanggal(item.waktuKeluar)}</td>
+                <td>${tarifText}</td>
+                <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                <td><button class="btn-delete" onclick="hapusData(${item.id})">Hapus</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        updateStatistik();
+    }
+
+    tampilkanData();
+</script>
+
+</body>
+</html>
