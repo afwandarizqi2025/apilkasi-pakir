@@ -1,0 +1,50 @@
+// 1. Definisikan Kelas LCG (Linear Congruential Generator)
+class LCG {
+    constructor(seed = Date.now()) {
+        this.m = 2147483647; // 2^31 - 1
+        this.a = 16807;      // Multiplier baku
+        this.c = 0;          // Increment
+        this.state = seed;
+    }
+
+    // Menghasilkan angka acak antara 0 dan 1
+    nextFloat() {
+        this.state = (this.a * this.state + this.c) % this.m;
+        return this.state / this.m;
+    }
+
+    // Menghasilkan angka acak bulat dalam rentang [min, max]
+    nextInt(min, max) {
+        return Math.floor(this.nextFloat() * (max - min + 1)) + min;
+    }
+}
+
+// 2. Integrasi LCG pada Sistem Tiket Parkir
+class SistemParkir {
+    constructor() {
+        // Inisialisasi generator LCG dengan seed angka unik
+        this.lcg = new LCG(12345);
+    }
+
+    buatTiketParkir(platNomor, jenisKendaraan) {
+        // Membuat ID Tiket Acak Unik menggunakan LCG
+        const nomorAcak = this.lcg.nextInt(1000, 9999);
+        const idTiket = `PKR-${Date.now().toString().slice(-4)}-${nomorAcak}`;
+
+        return {
+            idTiket: idTiket,
+            platNomor: platNomor,
+            jenisKendaraan: jenisKendaraan,
+            waktuMasuk: new Date().toLocaleTimeString('id-ID')
+        };
+    }
+}
+
+// 3. Uji Coba Penggunaan
+const parkir = new SistemParkir();
+
+const tiket1 = parkir.buatTiketParkir('B 1234 ABC', 'Mobil');
+console.log(tiket1);
+
+const tiket2 = parkir.buatTiketParkir('B 5678 XYZ', 'Motor');
+console.log(tiket2);
