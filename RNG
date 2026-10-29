@@ -1,0 +1,22 @@
+// Linear Congruential Generator (LCG)
+class LCG {
+    constructor(seed, a = 1664525, c = 1013904223, m = 2 ** 32) {
+        this.state = seed;
+        this.a = a;
+        this.c = c;
+        this.m = m;
+    }
+
+    next() {
+        this.state = (this.a * this.state + this.c) % this.m;
+        return this.state / this.m;
+    }
+
+    reset(seed) {
+        this.state = seed;
+    }
+}
+
+const rng = new LCG(12345);
+const sampel = Array.from({ length: 5 }, () => rng.next().toFixed(4));
+console.log('Lima angka acak:', sampel);
