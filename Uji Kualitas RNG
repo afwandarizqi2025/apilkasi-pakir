@@ -1,0 +1,26 @@
+// 1. Definisikan kelas/fungsi LCG terlebih dahulu
+class LCG {
+  constructor(seed = Date.now()) {
+    this.m = 0x80000000; // 2**31
+    this.a = 1103515245;
+    this.c = 12345;
+    this.state = seed;
+  }
+
+  // Mengembalikan angka acak float antara 0 dan 1
+  nextFloat() {
+    this.state = (this.a * this.state + this.c) % this.m;
+    return this.state / (this.m - 1);
+  }
+
+  // Mengembalikan angka acak integer antara min dan max
+  nextInt(min, max) {
+    return Math.floor(this.nextFloat() * (max - min + 1)) + min;
+  }
+}
+
+// 2. Contoh Penggunaan LCG
+const lcg = new LCG(12345); // Inisialisasi dengan seed
+
+console.log(lcg.nextFloat()); // Menghasilkan angka acak 0-1
+console.log(lcg.nextInt(1, 100)); // Menghasilkan angka acak 1-100
